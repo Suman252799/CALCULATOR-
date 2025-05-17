@@ -2,71 +2,99 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Smart Calculator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Calculator</title>
   <style>
-    body {
-      font-family: sans-serif;
-      background: linear-gradient(135deg, #1e3c72, #2a5298);
-      color: white;
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      height: 100%; width: 100%;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #000;
+      overflow: hidden;
+    }
+    #intro {
+      position: fixed;
+      top: 0; left: 0;
+      height: 100%; width: 100%;
+      background: #000;
+      color: #fff;
       display: flex;
-      align-items: center;
       justify-content: center;
-      height: 100vh;
-      margin: 0;
+      align-items: center;
+      font-size: 28px;
+      animation: fadeOut 3s forwards;
+      z-index: 10;
+    }
+    @keyframes fadeOut {
+      0% { opacity: 1; }
+      70% { opacity: 1; }
+      100% { opacity: 0; visibility: hidden; }
     }
     .calculator {
-      background: #111;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 0 10px #000;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      max-width: 480px;
+      margin: auto;
+      padding: 15px;
+      background: white;
+      border-radius: 15px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
     }
     #display {
-      background: #000;
-      color: #0f0;
-      font-size: 2em;
-      padding: 10px;
-      border: none;
       width: 100%;
-      margin-bottom: 10px;
+      height: 80px;
+      font-size: 36px;
       text-align: right;
-      border-radius: 5px;
+      padding: 10px 20px;
+      margin-bottom: 20px;
+      border: 2px solid #ddd;
+      border-radius: 12px;
+      background-color: #eee;
+      user-select: none;
     }
     .buttons {
+      width: 100%;
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 10px;
+      gap: 12px;
     }
     button {
-      font-size: 1.2em;
-      padding: 15px;
+      font-size: 24px;
+      padding: 20px 0;
       border: none;
-      border-radius: 5px;
-      background: #333;
+      border-radius: 12px;
+      background-color: #4CAF50;
       color: white;
       cursor: pointer;
-      transition: 0.2s;
+      user-select: none;
+      transition: background-color 0.2s ease;
     }
-    button:hover {
-      background: #555;
+    button:active { background-color: #388e3c; }
+    .operator { background-color: #2196F3; }
+    .operator:active { background-color: #0b7dda; }
+    .equal { background-color: #FF9800; }
+    .equal:active { background-color: #e67e22; }
+    .clear {
+      background-color: #f44336;
+      grid-column: span 2;
     }
-    .equal {
-      background: #28a745;
+    .clear:active { background-color: #b71c1c; }
+    .back {
+      background-color: #9C27B0;
+      grid-column: span 2;
     }
-    .equal:hover {
-      background: #218838;
-    }
-    .operator {
-      background: #007bff;
-    }
-    .operator:hover {
-      background: #0056b3;
-    }
+    .back:active { background-color: #6a0080; }
   </style>
 </head>
 <body>
-  <div class="calculator">
-    <input id="display" readonly />
+
+  <div id="intro">Powered by Suman</div>
+
+  <div class="calculator" role="main" aria-label="Calculator">
+    <input type="text" id="display" readonly aria-live="polite" />
     <div class="buttons">
       <button onclick="press('7')">7</button>
       <button onclick="press('8')">8</button>
@@ -88,78 +116,70 @@
       <button class="equal" onclick="calculate()">=</button>
       <button class="operator" onclick="press('+')">+</button>
 
-      <button style="grid-column: span 4;" onclick="clearDisplay()">Clear</button>
+      <button class="clear" onclick="clearDisplay()">Clear</button>
+      <button class="back" onclick="backspace()">←</button>
     </div>
   </div>
 
+  <audio id="clickSound" preload="auto">
+    <source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg">
+  </audio>
+
   <script>
-    let display = document.getElementById('display');
-    function press(val) {
-      display.value += val;
+    const display = document.getElementById('display');
+    const clickSound = document.getElementById('clickSound');
+
+    function playClick() {
+      clickSound.pause();
+      clickSound.currentTime = 0;
+      clickSound.play();
     }
+
+    function press(value) {
+      playClick();
+      display.value += value;
+    }
+
     function calculate() {
+      playClick();
       try {
         display.value = eval(display.value);
       } catch {
-        display.value = "Error";
+        display.value = "Error!";
       }
     }
+
     function clearDisplay() {
+      playClick();
       display.value = '';
     }
 
-    // Register service worker for offline and auto update
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js')
-        .then(() => console.log('Service Worker Registered'))
-        .catch(err => console.error('SW Error:', err));
+    function backspace() {
+      playClick();
+      display.value = display.value.slice(0, -1);
     }
+
+    // Prevent page reload (No refresh)
+    window.addEventListener("beforeunload", function (e) {
+      e.preventDefault();
+      e.returnValue = '';
+    });
+
+    // Auto-update loader (Optional)
+    setInterval(() => {
+      fetch('https://raw.githubusercontent.com/Suman252799/CALCULATOR-/main/Index.html')
+        .then(res => res.text())
+        .then(newCode => {
+          if (!newCode.includes('<html')) return;
+          const parser = new DOMParser();
+          const newDoc = parser.parseFromString(newCode, 'text/html');
+          const newBody = newDoc.body.innerHTML;
+          if (document.body.innerHTML !== newBody) {
+            location.reload(); // Only reload if something changed
+          }
+        });
+    }, 10000); // checks every 10 seconds
   </script>
+
 </body>
 </html>
-const CACHE_NAME = "calculator-cache-v1";
-const urlsToCache = [
-  "./",
-  "./index.html"
-];
-
-self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(urlsToCache);
-    })
-  );
-});
-
-self.addEventListener("fetch", (event) => {
-  event.respondWith(
-    caches.match(event.request).then((response) => {
-      return (
-        response ||
-        fetch(event.request).then((res) => {
-          return caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, res.clone());
-            return res;
-          });
-        })
-      );
-    }).catch(() => {
-      return new Response("You're offline and this content isn't cached.");
-    })
-  );
-});
-
-self.addEventListener("activate", (event) => {
-  const cacheWhitelist = [CACHE_NAME];
-  event.waitUntil(
-    caches.keys().then((keyList) =>
-      Promise.all(
-        keyList.map((key) => {
-          if (!cacheWhitelist.includes(key)) {
-            return caches.delete(key);
-          }
-        })
-      )
-    )
-  );
-});
