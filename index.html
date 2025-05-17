@@ -5,16 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Calculator</title>
   <style>
-    * {
-      margin: 0; padding: 0; box-sizing: border-box;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body {
       height: 100%; width: 100%;
       font-family: 'Segoe UI', sans-serif;
       background-color: #000;
       overflow: hidden;
     }
-
     #intro {
       position: fixed;
       top: 0; left: 0;
@@ -28,13 +25,11 @@
       animation: fadeOut 3s forwards;
       z-index: 10;
     }
-
     @keyframes fadeOut {
       0% { opacity: 1; }
       70% { opacity: 1; }
       100% { opacity: 0; visibility: hidden; }
     }
-
     .calculator {
       display: flex;
       flex-direction: column;
@@ -77,35 +72,21 @@
       user-select: none;
       transition: background-color 0.2s ease;
     }
-    button:active {
-      background-color: #388e3c;
-    }
-    .operator {
-      background-color: #2196F3;
-    }
-    .operator:active {
-      background-color: #0b7dda;
-    }
-    .equal {
-      background-color: #FF9800;
-    }
-    .equal:active {
-      background-color: #e67e22;
-    }
+    button:active { background-color: #388e3c; }
+    .operator { background-color: #2196F3; }
+    .operator:active { background-color: #0b7dda; }
+    .equal { background-color: #FF9800; }
+    .equal:active { background-color: #e67e22; }
     .clear {
       background-color: #f44336;
       grid-column: span 2;
     }
-    .clear:active {
-      background-color: #b71c1c;
-    }
+    .clear:active { background-color: #b71c1c; }
     .back {
       background-color: #9C27B0;
       grid-column: span 2;
     }
-    .back:active {
-      background-color: #6a0080;
-    }
+    .back:active { background-color: #6a0080; }
   </style>
 </head>
 <body>
@@ -140,7 +121,6 @@
     </div>
   </div>
 
-  <!-- Click Sound -->
   <audio id="clickSound" preload="auto">
     <source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg">
   </audio>
@@ -178,6 +158,27 @@
       playClick();
       display.value = display.value.slice(0, -1);
     }
+
+    // Prevent page reload (No refresh)
+    window.addEventListener("beforeunload", function (e) {
+      e.preventDefault();
+      e.returnValue = '';
+    });
+
+    // Auto-update loader (Optional)
+    setInterval(() => {
+      fetch('https://raw.githubusercontent.com/Suman252799/CALCULATOR-/main/Index.html')
+        .then(res => res.text())
+        .then(newCode => {
+          if (!newCode.includes('<html')) return;
+          const parser = new DOMParser();
+          const newDoc = parser.parseFromString(newCode, 'text/html');
+          const newBody = newDoc.body.innerHTML;
+          if (document.body.innerHTML !== newBody) {
+            location.reload(); // Only reload if something changed
+          }
+        });
+    }, 10000); // checks every 10 seconds
   </script>
 
 </body>
