@@ -3,183 +3,155 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Calculator</title>
+  <title>My Calculator App</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body {
-      height: 100%; width: 100%;
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #000;
-      overflow: hidden;
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f5f5f5;
+      text-align: center;
     }
-    #intro {
-      position: fixed;
-      top: 0; left: 0;
-      height: 100%; width: 100%;
-      background: #000;
-      color: #fff;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-size: 28px;
-      animation: fadeOut 3s forwards;
-      z-index: 10;
-    }
-    @keyframes fadeOut {
-      0% { opacity: 1; }
-      70% { opacity: 1; }
-      100% { opacity: 0; visibility: hidden; }
-    }
-    .calculator {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      max-width: 480px;
-      margin: auto;
-      padding: 15px;
+    #result {
+      font-size: 2em;
+      margin-bottom: 10px;
+      padding: 10px;
       background: white;
-      border-radius: 15px;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-    }
-    #display {
+      border: 1px solid #ccc;
       width: 100%;
-      height: 80px;
-      font-size: 36px;
-      text-align: right;
-      padding: 10px 20px;
-      margin-bottom: 20px;
-      border: 2px solid #ddd;
-      border-radius: 12px;
-      background-color: #eee;
-      user-select: none;
-    }
-    .buttons {
-      width: 100%;
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
+      max-width: 300px;
+      margin-left: auto;
+      margin-right: auto;
     }
     button {
-      font-size: 24px;
-      padding: 20px 0;
+      font-size: 1.2em;
+      margin: 5px;
+      width: 60px;
+      height: 60px;
+      border-radius: 10px;
       border: none;
-      border-radius: 12px;
-      background-color: #4CAF50;
+      background: #007bff;
       color: white;
       cursor: pointer;
-      user-select: none;
-      transition: background-color 0.2s ease;
     }
-    button:active { background-color: #388e3c; }
-    .operator { background-color: #2196F3; }
-    .operator:active { background-color: #0b7dda; }
-    .equal { background-color: #FF9800; }
-    .equal:active { background-color: #e67e22; }
-    .clear {
-      background-color: #f44336;
-      grid-column: span 2;
+    button:hover {
+      background: #0056b3;
     }
-    .clear:active { background-color: #b71c1c; }
-    .back {
-      background-color: #9C27B0;
-      grid-column: span 2;
-    }
-    .back:active { background-color: #6a0080; }
   </style>
 </head>
 <body>
 
-  <div id="intro">Powered by Suman</div>
+<h1>Calculator App</h1>
 
-  <div class="calculator" role="main" aria-label="Calculator">
-    <input type="text" id="display" readonly aria-live="polite" />
-    <div class="buttons">
-      <button onclick="press('7')">7</button>
-      <button onclick="press('8')">8</button>
-      <button onclick="press('9')">9</button>
-      <button class="operator" onclick="press('/')">÷</button>
+<div id="result">0</div>
 
-      <button onclick="press('4')">4</button>
-      <button onclick="press('5')">5</button>
-      <button onclick="press('6')">6</button>
-      <button class="operator" onclick="press('*')">×</button>
+<div>
+  <button onclick="press('7')">7</button>
+  <button onclick="press('8')">8</button>
+  <button onclick="press('9')">9</button>
+  <button onclick="press('/')">÷</button>
+</div>
+<div>
+  <button onclick="press('4')">4</button>
+  <button onclick="press('5')">5</button>
+  <button onclick="press('6')">6</button>
+  <button onclick="press('*')">×</button>
+</div>
+<div>
+  <button onclick="press('1')">1</button>
+  <button onclick="press('2')">2</button>
+  <button onclick="press('3')">3</button>
+  <button onclick="press('-')">−</button>
+</div>
+<div>
+  <button onclick="press('0')">0</button>
+  <button onclick="press('.')">.</button>
+  <button onclick="calculate()">=</button>
+  <button onclick="press('+')">+</button>
+</div>
+<div>
+  <button onclick="clearResult()">Clear</button>
+</div>
 
-      <button onclick="press('1')">1</button>
-      <button onclick="press('2')">2</button>
-      <button onclick="press('3')">3</button>
-      <button class="operator" onclick="press('-')">−</button>
+<script>
+  let expression = '';
 
-      <button onclick="press('0')">0</button>
-      <button onclick="press('.')">.</button>
-      <button class="equal" onclick="calculate()">=</button>
-      <button class="operator" onclick="press('+')">+</button>
+  function press(value) {
+    expression += value;
+    document.getElementById('result').textContent = expression;
+  }
 
-      <button class="clear" onclick="clearDisplay()">Clear</button>
-      <button class="back" onclick="backspace()">←</button>
-    </div>
-  </div>
-
-  <audio id="clickSound" preload="auto">
-    <source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg">
-  </audio>
-
-  <script>
-    const display = document.getElementById('display');
-    const clickSound = document.getElementById('clickSound');
-
-    function playClick() {
-      clickSound.pause();
-      clickSound.currentTime = 0;
-      clickSound.play();
+  function calculate() {
+    try {
+      expression = eval(expression).toString();
+      document.getElementById('result').textContent = expression;
+    } catch {
+      document.getElementById('result').textContent = 'Error';
+      expression = '';
     }
+  }
 
-    function press(value) {
-      playClick();
-      display.value += value;
-    }
+  function clearResult() {
+    expression = '';
+    document.getElementById('result').textContent = '0';
+  }
 
-    function calculate() {
-      playClick();
-      try {
-        display.value = eval(display.value);
-      } catch {
-        display.value = "Error!";
-      }
-    }
-
-    function clearDisplay() {
-      playClick();
-      display.value = '';
-    }
-
-    function backspace() {
-      playClick();
-      display.value = display.value.slice(0, -1);
-    }
-
-    // Prevent page reload (No refresh)
-    window.addEventListener("beforeunload", function (e) {
-      e.preventDefault();
-      e.returnValue = '';
-    });
-
-    // Auto-update loader (Optional)
-    setInterval(() => {
-      fetch('https://raw.githubusercontent.com/Suman252799/CALCULATOR-/main/Index.html')
-        .then(res => res.text())
-        .then(newCode => {
-          if (!newCode.includes('<html')) return;
-          const parser = new DOMParser();
-          const newDoc = parser.parseFromString(newCode, 'text/html');
-          const newBody = newDoc.body.innerHTML;
-          if (document.body.innerHTML !== newBody) {
-            location.reload(); // Only reload if something changed
-          }
+  // Service Worker Registration for Offline & Auto Update
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', function() {
+      navigator.serviceWorker.register('service-worker.js')
+        .then(function(registration) {
+          console.log('ServiceWorker registered with scope:', registration.scope);
+        })
+        .catch(function(error) {
+          console.log('ServiceWorker registration failed:', error);
         });
-    }, 10000); // checks every 10 seconds
-  </script>
+    });
+  }
+</script>
 
 </body>
 </html>
+const CACHE_NAME = 'calc-cache-v1';
+const urlsToCache = [
+  '/',
+  '/Index.html',
+  // Add other static assets here if you have (CSS, JS, images...)
+];
+
+self.addEventListener('install', event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(cache => {
+      console.log('Opened cache');
+      return cache.addAll(urlsToCache);
+    })
+  );
+});
+
+// Fetch from cache first, then network fallback
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    caches.match(event.request).then(response => {
+      if (response) {
+        return response; // return cached file
+      }
+      return fetch(event.request);
+    })
+  );
+});
+
+// Delete old caches if any on activate
+self.addEventListener('activate', event => {
+  const cacheWhitelist = [CACHE_NAME];
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cacheName => {
+          if (!cacheWhitelist.includes(cacheName)) {
+            console.log('Deleting old cache:', cacheName);
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
+  );
+});
