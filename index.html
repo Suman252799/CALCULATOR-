@@ -2,156 +2,76 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>My Calculator App</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      background: #f5f5f5;
-      text-align: center;
-    }
-    #result {
-      font-size: 2em;
-      margin-bottom: 10px;
-      padding: 10px;
-      background: white;
-      border: 1px solid #ccc;
-      width: 100%;
-      max-width: 300px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-    button {
-      font-size: 1.2em;
-      margin: 5px;
-      width: 60px;
-      height: 60px;
-      border-radius: 10px;
-      border: none;
-      background: #007bff;
-      color: white;
-      cursor: pointer;
-    }
-    button:hover {
-      background: #0056b3;
-    }
-  </style>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Smart Calculator</title>
 </head>
 <body>
+  <h1>Calculator</h1>
+  <!-- তোমার ক্যালকুলেটর UI এখানে থাকবে -->
 
-<h1>Calculator App</h1>
-
-<div id="result">0</div>
-
-<div>
-  <button onclick="press('7')">7</button>
-  <button onclick="press('8')">8</button>
-  <button onclick="press('9')">9</button>
-  <button onclick="press('/')">÷</button>
-</div>
-<div>
-  <button onclick="press('4')">4</button>
-  <button onclick="press('5')">5</button>
-  <button onclick="press('6')">6</button>
-  <button onclick="press('*')">×</button>
-</div>
-<div>
-  <button onclick="press('1')">1</button>
-  <button onclick="press('2')">2</button>
-  <button onclick="press('3')">3</button>
-  <button onclick="press('-')">−</button>
-</div>
-<div>
-  <button onclick="press('0')">0</button>
-  <button onclick="press('.')">.</button>
-  <button onclick="calculate()">=</button>
-  <button onclick="press('+')">+</button>
-</div>
-<div>
-  <button onclick="clearResult()">Clear</button>
-</div>
-
-<script>
-  let expression = '';
-
-  function press(value) {
-    expression += value;
-    document.getElementById('result').textContent = expression;
-  }
-
-  function calculate() {
-    try {
-      expression = eval(expression).toString();
-      document.getElementById('result').textContent = expression;
-    } catch {
-      document.getElementById('result').textContent = 'Error';
-      expression = '';
+  <script>
+    // সার্ভিস ওয়ার্কার রেজিস্টার
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./service-worker.js')
+          .then(reg => {
+            console.log("Service Worker registered", reg);
+          })
+          .catch(err => {
+            console.log("Service Worker registration failed:", err);
+          });
+      });
     }
-  }
-
-  function clearResult() {
-    expression = '';
-    document.getElementById('result').textContent = '0';
-  }
-
-  // Service Worker Registration for Offline & Auto Update
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function() {
-      navigator.serviceWorker.register('service-worker.js')
-        .then(function(registration) {
-          console.log('ServiceWorker registered with scope:', registration.scope);
-        })
-        .catch(function(error) {
-          console.log('ServiceWorker registration failed:', error);
-        });
-    });
-  }
-</script>
-
+  </script>
 </body>
 </html>
-const CACHE_NAME = 'calc-cache-v1';
+const CACHE_NAME = "calculator-cache-v1";
 const urlsToCache = [
-  '/',
-  '/Index.html',
-  // Add other static assets here if you have (CSS, JS, images...)
+  "./",
+  "./index.html",
+  // এখানে যদি style.css বা script.js থাকে তা যোগ করো
 ];
 
-self.addEventListener('install', event => {
+// ইনস্টল - প্রথমবার সব ফাইল ক্যাশে রাখবে
+self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      console.log('Opened cache');
+    caches.open(CACHE_NAME).then((cache) => {
       return cache.addAll(urlsToCache);
     })
   );
 });
 
-// Fetch from cache first, then network fallback
-self.addEventListener('fetch', event => {
+// ফেচ - ক্যাশে থাকলে সেখান থেকে দেবে, না থাকলে নেটওয়ার্ক থেকে
+self.addEventListener("fetch", (event) => {
   event.respondWith(
-    caches.match(event.request).then(response => {
-      if (response) {
-        return response; // return cached file
-      }
-      return fetch(event.request);
+    caches.match(event.request).then((response) => {
+      return (
+        response ||
+        fetch(event.request).then((res) => {
+          return caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, res.clone());
+            return res;
+          });
+        })
+      );
+    }).catch(() => {
+      return new Response("You're offline and the requested content is not cached.");
     })
   );
 });
 
-// Delete old caches if any on activate
-self.addEventListener('activate', event => {
+// অ্যাক্টিভেট - পুরানো ক্যাশ মুছে ফেলা
+self.addEventListener("activate", (event) => {
   const cacheWhitelist = [CACHE_NAME];
   event.waitUntil(
-    caches.keys().then(cacheNames => {
-      return Promise.all(
-        cacheNames.map(cacheName => {
-          if (!cacheWhitelist.includes(cacheName)) {
-            console.log('Deleting old cache:', cacheName);
-            return caches.delete(cacheName);
+    caches.keys().then((keyList) =>
+      Promise.all(
+        keyList.map((key) => {
+          if (!cacheWhitelist.includes(key)) {
+            return caches.delete(key);
           }
         })
-      );
-    })
+      )
+    )
   );
 });
