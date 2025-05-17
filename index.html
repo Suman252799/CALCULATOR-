@@ -4,74 +4,121 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Smart Calculator</title>
+  <style>
+    body {
+      font-family: Arial;
+      background: #222;
+      color: #fff;
+      text-align: center;
+      padding: 20px;
+    }
+    #display {
+      width: 90%;
+      padding: 10px;
+      font-size: 2em;
+      margin: 10px auto;
+      display: block;
+    }
+    #buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+    button {
+      padding: 20px;
+      font-size: 1.5em;
+      background: #444;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+    }
+    button:hover {
+      background: #666;
+    }
+  </style>
 </head>
 <body>
-  <h1>Calculator</h1>
-  <!-- তোমার ক্যালকুলেটর UI এখানে থাকবে -->
+  <h1>Smart Calculator</h1>
+  <input type="text" id="display" readonly />
+  <div id="buttons">
+    <button onclick="clearDisplay()">C</button>
+    <button onclick="append('/')">/</button>
+    <button onclick="append('*')">*</button>
+    <button onclick="backspace()">←</button>
+    <button onclick="append('7')">7</button>
+    <button onclick="append('8')">8</button>
+    <button onclick="append('9')">9</button>
+    <button onclick="append('-')">-</button>
+    <button onclick="append('4')">4</button>
+    <button onclick="append('5')">5</button>
+    <button onclick="append('6')">6</button>
+    <button onclick="append('+')">+</button>
+    <button onclick="append('1')">1</button>
+    <button onclick="append('2')">2</button>
+    <button onclick="append('3')">3</button>
+    <button onclick="calculate()">=</button>
+    <button onclick="append('0')">0</button>
+    <button onclick="append('.')">.</button>
+  </div>
 
   <script>
-    // সার্ভিস ওয়ার্কার রেজিস্টার
+    let display = document.getElementById('display');
+
+    function append(char) {
+      display.value += char;
+    }
+
+    function clearDisplay() {
+      display.value = '';
+    }
+
+    function backspace() {
+      display.value = display.value.slice(0, -1);
+    }
+
+    function calculate() {
+      try {
+        display.value = eval(display.value);
+      } catch {
+        display.value = 'Error';
+      }
+    }
+
+    // Register service worker for offline + update support
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./service-worker.js')
-          .then(reg => {
-            console.log("Service Worker registered", reg);
-          })
-          .catch(err => {
-            console.log("Service Worker registration failed:", err);
-          });
+        navigator.serviceWorker.register('service-worker.js')
+          .then(reg => console.log('Service Worker Registered'))
+          .catch(err => console.error('Service Worker Registration Failed:', err));
       });
+    }
+  </script>
+
+  <!-- Service Worker Inline (if allowed) -->
+  <script type="text/javascript">
+    const swBlob = new Blob([`
+      self.addEventListener('install', event => {
+        event.waitUntil(
+          caches.open('calc-v1').then(cache => {
+            return cache.addAll([
+              './',
+              './index.html'
+            ]);
+          })
+        );
+      });
+
+      self.addEventListener('fetch', event => {
+        event.respondWith(
+          fetch(event.request).catch(() => caches.match(event.request))
+        );
+      });
+    `], { type: 'application/javascript' });
+
+    const swUrl = URL.createObjectURL(swBlob);
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register(swUrl);
     }
   </script>
 </body>
 </html>
-const CACHE_NAME = "calculator-cache-v1";
-const urlsToCache = [
-  "./",
-  "./index.html",
-  // এখানে যদি style.css বা script.js থাকে তা যোগ করো
-];
-
-// ইনস্টল - প্রথমবার সব ফাইল ক্যাশে রাখবে
-self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(urlsToCache);
-    })
-  );
-});
-
-// ফেচ - ক্যাশে থাকলে সেখান থেকে দেবে, না থাকলে নেটওয়ার্ক থেকে
-self.addEventListener("fetch", (event) => {
-  event.respondWith(
-    caches.match(event.request).then((response) => {
-      return (
-        response ||
-        fetch(event.request).then((res) => {
-          return caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, res.clone());
-            return res;
-          });
-        })
-      );
-    }).catch(() => {
-      return new Response("You're offline and the requested content is not cached.");
-    })
-  );
-});
-
-// অ্যাক্টিভেট - পুরানো ক্যাশ মুছে ফেলা
-self.addEventListener("activate", (event) => {
-  const cacheWhitelist = [CACHE_NAME];
-  event.waitUntil(
-    caches.keys().then((keyList) =>
-      Promise.all(
-        keyList.map((key) => {
-          if (!cacheWhitelist.includes(key)) {
-            return caches.delete(key);
-          }
-        })
-      )
-    )
-  );
-});
