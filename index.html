@@ -6,119 +6,160 @@
   <title>Smart Calculator</title>
   <style>
     body {
-      font-family: Arial;
-      background: #222;
-      color: #fff;
-      text-align: center;
+      font-family: sans-serif;
+      background: linear-gradient(135deg, #1e3c72, #2a5298);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .calculator {
+      background: #111;
       padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px #000;
     }
     #display {
-      width: 90%;
-      padding: 10px;
+      background: #000;
+      color: #0f0;
       font-size: 2em;
-      margin: 10px auto;
-      display: block;
+      padding: 10px;
+      border: none;
+      width: 100%;
+      margin-bottom: 10px;
+      text-align: right;
+      border-radius: 5px;
     }
-    #buttons {
+    .buttons {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 10px;
     }
     button {
-      padding: 20px;
-      font-size: 1.5em;
-      background: #444;
-      color: #fff;
+      font-size: 1.2em;
+      padding: 15px;
       border: none;
       border-radius: 5px;
+      background: #333;
+      color: white;
+      cursor: pointer;
+      transition: 0.2s;
     }
     button:hover {
-      background: #666;
+      background: #555;
+    }
+    .equal {
+      background: #28a745;
+    }
+    .equal:hover {
+      background: #218838;
+    }
+    .operator {
+      background: #007bff;
+    }
+    .operator:hover {
+      background: #0056b3;
     }
   </style>
 </head>
 <body>
-  <h1>Smart Calculator</h1>
-  <input type="text" id="display" readonly />
-  <div id="buttons">
-    <button onclick="clearDisplay()">C</button>
-    <button onclick="append('/')">/</button>
-    <button onclick="append('*')">*</button>
-    <button onclick="backspace()">←</button>
-    <button onclick="append('7')">7</button>
-    <button onclick="append('8')">8</button>
-    <button onclick="append('9')">9</button>
-    <button onclick="append('-')">-</button>
-    <button onclick="append('4')">4</button>
-    <button onclick="append('5')">5</button>
-    <button onclick="append('6')">6</button>
-    <button onclick="append('+')">+</button>
-    <button onclick="append('1')">1</button>
-    <button onclick="append('2')">2</button>
-    <button onclick="append('3')">3</button>
-    <button onclick="calculate()">=</button>
-    <button onclick="append('0')">0</button>
-    <button onclick="append('.')">.</button>
+  <div class="calculator">
+    <input id="display" readonly />
+    <div class="buttons">
+      <button onclick="press('7')">7</button>
+      <button onclick="press('8')">8</button>
+      <button onclick="press('9')">9</button>
+      <button class="operator" onclick="press('/')">÷</button>
+
+      <button onclick="press('4')">4</button>
+      <button onclick="press('5')">5</button>
+      <button onclick="press('6')">6</button>
+      <button class="operator" onclick="press('*')">×</button>
+
+      <button onclick="press('1')">1</button>
+      <button onclick="press('2')">2</button>
+      <button onclick="press('3')">3</button>
+      <button class="operator" onclick="press('-')">−</button>
+
+      <button onclick="press('0')">0</button>
+      <button onclick="press('.')">.</button>
+      <button class="equal" onclick="calculate()">=</button>
+      <button class="operator" onclick="press('+')">+</button>
+
+      <button style="grid-column: span 4;" onclick="clearDisplay()">Clear</button>
+    </div>
   </div>
 
   <script>
     let display = document.getElementById('display');
-
-    function append(char) {
-      display.value += char;
+    function press(val) {
+      display.value += val;
     }
-
-    function clearDisplay() {
-      display.value = '';
-    }
-
-    function backspace() {
-      display.value = display.value.slice(0, -1);
-    }
-
     function calculate() {
       try {
         display.value = eval(display.value);
       } catch {
-        display.value = 'Error';
+        display.value = "Error";
       }
     }
-
-    // Register service worker for offline + update support
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('service-worker.js')
-          .then(reg => console.log('Service Worker Registered'))
-          .catch(err => console.error('Service Worker Registration Failed:', err));
-      });
+    function clearDisplay() {
+      display.value = '';
     }
-  </script>
 
-  <!-- Service Worker Inline (if allowed) -->
-  <script type="text/javascript">
-    const swBlob = new Blob([`
-      self.addEventListener('install', event => {
-        event.waitUntil(
-          caches.open('calc-v1').then(cache => {
-            return cache.addAll([
-              './',
-              './index.html'
-            ]);
-          })
-        );
-      });
-
-      self.addEventListener('fetch', event => {
-        event.respondWith(
-          fetch(event.request).catch(() => caches.match(event.request))
-        );
-      });
-    `], { type: 'application/javascript' });
-
-    const swUrl = URL.createObjectURL(swBlob);
+    // Register service worker for offline and auto update
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register(swUrl);
+      navigator.serviceWorker.register('sw.js')
+        .then(() => console.log('Service Worker Registered'))
+        .catch(err => console.error('SW Error:', err));
     }
   </script>
 </body>
 </html>
+const CACHE_NAME = "calculator-cache-v1";
+const urlsToCache = [
+  "./",
+  "./index.html"
+];
+
+self.addEventListener("install", (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(urlsToCache);
+    })
+  );
+});
+
+self.addEventListener("fetch", (event) => {
+  event.respondWith(
+    caches.match(event.request).then((response) => {
+      return (
+        response ||
+        fetch(event.request).then((res) => {
+          return caches.open(CACHE_NAME).then((cache) => {
+            cache.put(event.request, res.clone());
+            return res;
+          });
+        })
+      );
+    }).catch(() => {
+      return new Response("You're offline and this content isn't cached.");
+    })
+  );
+});
+
+self.addEventListener("activate", (event) => {
+  const cacheWhitelist = [CACHE_NAME];
+  event.waitUntil(
+    caches.keys().then((keyList) =>
+      Promise.all(
+        keyList.map((key) => {
+          if (!cacheWhitelist.includes(key)) {
+            return caches.delete(key);
+          }
+        })
+      )
+    )
+  );
+});
